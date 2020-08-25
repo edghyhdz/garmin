@@ -30,7 +30,7 @@ class GarminFetcher(object):
         # Other parameters that might be needed                                     [ ]
         # What should this class do beside fetching the data from garmin connect    [ ]
         # Do a separate config class                                                [ ]
-        # Error handling class                                                      [ ]
+        # Error handling class, improve                                             [ ]
 
 
     def fetch_data(self):
@@ -55,15 +55,33 @@ class GarminFetcher(object):
             df['timestamp'] = [x.timestamp() for x in df['date']]
             df = df.sort_values(by='timestamp')
 
-            if not df.empty: 
-                return df
-            else: 
-                return None
+            if df.empty:
+                raise GarminException(1)
 
-        except Exception as e:
+        except GarminException as err:
             error_line = sys.exc_info()[-1].tb_lineno
-            logging.error("Error: {}. Error line: {}".format(str(e), error_line))
+            logging.error("Error: {}. Error line: {}".format(err.error_codes[err.msg], error_line))
             return None
+
+        except Exception as err:
+            error_line = sys.exc_info()[-1].tb_lineno
+            logging.error("Error: {}. Error line: {}".format(err.error_codes[err.msg], error_line))
+            return None
+
+
+class GarminException(Exception):
+    """
+    Class to handle exceptions
+    """
+    error_codes = {
+        '1': "No data available",
+        '2': ""
+    }
+
+    def __init__(self, code):
+        self.code = code
+        self.msg = str(code)
+
 
 if __name__ == "__main__":
     url = 'https://livetrack.garmin.com/services/session/d6af5bdc-80c9-4055-ada3-0080368795bc/trackpoints?requestTime=1598336514853&from=1598307873965'
