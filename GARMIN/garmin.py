@@ -30,6 +30,8 @@ class GarminFetcher(object):
         # Other parameters that might be needed                                     [ ]
         # What should this class do beside fetching the data from garmin connect    [ ]
         # Do a separate config class                                                [ ]
+        # Error handling class                                                      [ ]
+
 
     def fetch_data(self):
         """
