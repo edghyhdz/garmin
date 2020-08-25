@@ -65,7 +65,7 @@ class GarminFetcher(object):
 
         except Exception as err:
             error_line = sys.exc_info()[-1].tb_lineno
-            logging.error("Error: {}. Error line: {}".format(err.error_codes[err.msg], error_line))
+            logging.error("Error: {}. Error line: {}".format(str(e), error_line))
             return None
 
 
