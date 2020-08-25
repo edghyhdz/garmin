@@ -5,7 +5,7 @@ import sys
 import logging
 from datetime import datetime
 
-file_name_conf = datetime.strftime(datetime.now(),"log_%Y_%m_%d.log")
+file_name_conf = datetime.strftime(datetime.now(), "log_%Y_%m_%d.log")
 
 logging.basicConfig(
     format='%(levelname)s: %(asctime)s - %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]',
