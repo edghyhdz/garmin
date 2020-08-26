@@ -8,6 +8,12 @@ from google.auth.transport.requests import Request
 import numpy as np
 import pandas as pd
 import sys
+import base64
+from bs4 import BeautifulSoup as bs
+import re
+
+
+
 import logging
 # Some code was taken from the official Gmail API website
 
@@ -31,8 +37,14 @@ class GoogleEmailFetch(object):
             error_line = sys.exc_info()[-1].tb_lineno
             logging.error("Error: {}. Error line: {}".format(err.error_codes[err.msg], error_line))
             return None
+        
+        self.regex_pattern_link = r'session\/(.*)\/token'
+        self.garmin_link = 'https://livetrack.garmin.com/services/session/{0}/trackpoints?requestTime={1}&from={2}'
 
-
+        # TODO: 
+        # Add more structure to the Exception class         [ ]
+        # Add more CONFIG CLASS!                            [ ]
+        # Change track points from garmin_link              [ ]
 
     def connect(self):
         """
@@ -83,20 +95,40 @@ class GoogleEmailFetch(object):
 
         return message_ids
     
+    def get_link(self, mail_body):
+        """
+        Helper function to work with get_email_content() method
+        It gets the link where the race/session from garmin is being broadcasted
+        """
+
+        soup = bs(mail_body, 'lxml')
+        href = soup.find('a', attrs={'title': 'Follow Me'}).get('href')
+
+        session_id = re.search(self.regex_pattern_link, href).group(1)
+
+        return session_id
+
+
     def get_email_content(self):
         """
-        
+        Gets email content
         """
         email_ids = self.email_ids()
         service = self.connect()
         messages = service.users().messages()
 
-        items_email = []
+        items_email = {}
         for id_mail in email_ids: 
-            temp_message = messages.get(userId='me', id=id_mail).execute()
-            item_content = temp_message.values()
-            items_email.append(item_content)
-        
+            temp_message = messages.get(userId='me', id=id_mail, format='full').execute()
+            content = temp_message['payload']['body']['data']
+            mail_body = base64.urlsafe_b64decode(content).decode('utf-8')
+            arrival_date = temp_message.get('internalDate')
+            arrival_date = int(arrival_date)/1000
+
+            # Get with soup or so the link we need
+            link = self.get_link(mail_body)
+            items_email[arrival_date] = link
+
         return items_email
 
     
