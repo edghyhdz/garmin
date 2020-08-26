@@ -11,7 +11,7 @@ file_name_conf = datetime.strftime(datetime.now(), "log_%Y_%m_%d.log")
 logging.basicConfig(
     format='%(levelname)s: %(asctime)s - %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]',
     datefmt='%d-%b-%y %H:%M:%S', 
-    level=logging.DEBUG,
+    level=logging.INFO,
     handlers=[
         logging.FileHandler(file_name_conf),
         logging.StreamHandler()
@@ -27,8 +27,10 @@ class GarminFetcher(object):
     def __init__(self, url):
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
-        self.path_df: str = './'
+        self.df_path: str = './'
         self.df_name: str = "test.csv"
+        self.df_full_path: str = os.path.join(self.df_path, self.df_name)
+        self.current_row_length: int = 0
 
         # TODO: 
         # Other parameters that might be needed                                             [ ]
@@ -63,6 +65,7 @@ class GarminFetcher(object):
             if self.df.empty:
                 raise GarminException(1)
             else:
+                self.save_file()
                 return self.df
 
         except GarminException as err:
@@ -75,18 +78,30 @@ class GarminFetcher(object):
             logging.error("Error: {}. Error line: {}".format(str(e), error_line))
             return None
     
-    def check_file(self):
+    def check_file(self) -> bool:
         """
         Checks whether downloaded file is at its most updated version 
         """
-        os.path.exists("./test.csv")
+        file_exists = os.path.exists(self.df_full_path)
         
+        if file_exists: 
+            temp_df = pd.read_csv(self.df_full_path, index_col=0)
+            self.current_row_length = len(temp_df)
+            if self.current_row_length > len(self.df): 
+                # Save file
+                pass
+            else:
+                pass
+            
+        return True
+
     def save_file(self):
         """
         Saves file with a given name 
         """
-        os.path.join(self.path_df, )
-
+        # self.check_file()
+        self.df.to_csv(self.df_full_path)
+        logging.info("Saved file: {}".format(self.df_full_path))
 
 class GarminException(Exception):
     """
