@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import sys
 import logging
+import os
 from datetime import datetime
 
 file_name_conf = datetime.strftime(datetime.now(), "log_%Y_%m_%d.log")
@@ -58,6 +59,8 @@ class GarminFetcher(object):
 
             if df.empty:
                 raise GarminException(1)
+            else:
+                return df
 
         except GarminException as err:
             error_line = sys.exc_info()[-1].tb_lineno
@@ -75,9 +78,10 @@ class GarminFetcher(object):
         """
 
 
+
 class GarminException(Exception):
     """
-    Class to handle exceptions
+    Class to handle exceptions from GarminFetcher class
     """
     error_codes = {
         '1': "No data available",
@@ -90,7 +94,7 @@ class GarminException(Exception):
 
 
 if __name__ == "__main__":
-    url = 'https://livetrack.garmin.com/services/session/d6af5bdc-80c9-4055-ada3-0080368795bc/trackpoints?requestTime=1598336514853&from=1598307873965'
+    url = 'https://livetrack.garmin.com/services/session/98ace7a3-27b2-4198-8077-4e286e63c75f/trackpoints?requestTime=1598423101349&from=1598387200372'
     test = GarminFetcher(url=url)         
     df = test.fetch_data()
     print(df)
