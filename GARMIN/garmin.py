@@ -65,7 +65,9 @@ class GarminFetcher(object):
             if self.df.empty:
                 raise GarminException(1)
             else:
-                self.save_file()
+                # self.save_file()
+                saved_file = self.check_file()
+                logging.info("Saved file: {}".format(saved_file))
                 return self.df
 
         except GarminException as err:
@@ -83,17 +85,22 @@ class GarminFetcher(object):
         Checks whether downloaded file is at its most updated version 
         """
         file_exists = os.path.exists(self.df_full_path)
-        
+        saved_file = False
+
         if file_exists: 
             temp_df = pd.read_csv(self.df_full_path, index_col=0)
             self.current_row_length = len(temp_df)
-            if self.current_row_length > len(self.df): 
-                # Save file
-                pass
+            logging.info("Current size: {}".format(self.current_row_length))
+            logging.info("New size: {}".format(len(self.df)))
+            if len(self.df) > self.current_row_length: 
+                # Save file if newest queried data 
+                # has more records than preivous one
+                self.save_file()
+                saved_file = True
             else:
-                pass
-            
-        return True
+                saved_file = False
+
+        return saved_file
 
     def save_file(self):
         """
@@ -122,4 +129,4 @@ if __name__ == "__main__":
     url = 'https://livetrack.garmin.com/services/session/98ace7a3-27b2-4198-8077-4e286e63c75f/trackpoints?requestTime=1598423101349&from=1598387200372'
     test = GarminFetcher(url=url)         
     df = test.fetch_data()
-    print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
+    # print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
