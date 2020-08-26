@@ -27,10 +27,11 @@ class GarminFetcher(object):
         self.url = url
     
         # TODO: 
-        # Other parameters that might be needed                                     [ ]
-        # What should this class do beside fetching the data from garmin connect    [ ]
-        # Do a separate config class                                                [ ]
-        # Error handling class, improve                                             [ ]
+        # Other parameters that might be needed                                             [ ]
+        # What should this class do beside fetching the data from garmin connect            [ ]
+        # Do a separate config class                                                        [ ]
+        # Error handling class, improve                                                     [ ]
+        # Include method to check whether data downloaded its at it most updated version    [ ]
 
 
     def fetch_data(self):
@@ -63,10 +64,15 @@ class GarminFetcher(object):
             logging.error("Error: {}. Error line: {}".format(err.error_codes[err.msg], error_line))
             return None
 
-        except Exception as err:
+        except Exception as e:
             error_line = sys.exc_info()[-1].tb_lineno
             logging.error("Error: {}. Error line: {}".format(str(e), error_line))
             return None
+    
+    def check_file(self):
+        """
+        Checks whether downloaded file is at its most updated version 
+        """
 
 
 class GarminException(Exception):
