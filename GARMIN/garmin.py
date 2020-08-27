@@ -32,7 +32,7 @@ class GarminFetcher(object):
     def __init__(self, url, session_id):
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
-        self.df_path: str = './'
+        self.df_path: str = './hb_logs/'
         self.df_name: str = "{}_{}_.csv".format(session_id, now)
         self.df_full_path: str = os.path.join(self.df_path, self.df_name)
         self.current_row_length: int = 0
