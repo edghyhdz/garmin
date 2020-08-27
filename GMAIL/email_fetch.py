@@ -27,6 +27,7 @@ class GoogleEmailFetch(object):
     def __init__(self, **kwargs):
         try: 
             for key in kwargs:
+                print("kwargs: {}".format(key))
                 if key in 'cred_path':
                     self.cred_path = kwargs[key]
                 elif key in 'token_path':
@@ -40,6 +41,7 @@ class GoogleEmailFetch(object):
         
         self.regex_pattern_link = r'session\/(.*)\/token'
         self.garmin_link = 'https://livetrack.garmin.com/services/session/{0}/trackpoints?requestTime={1}&from={2}'
+        self.session_id = None
 
         # TODO: 
         # Add more structure to the Exception class         [ ]
@@ -73,9 +75,6 @@ class GoogleEmailFetch(object):
         service = build('gmail', 'v1', credentials=creds)
 
         return service
-        # Call the Gmail API
-        # results = service.users().labels().list(userId='me').execute()
-        # labels = results.get('labels', [])
     
     def email_ids(self, label_list=['Label_4725329219109390222']) -> list:
         """
@@ -109,7 +108,7 @@ class GoogleEmailFetch(object):
         return session_id
 
 
-    def get_email_content(self):
+    def get_email_content(self) -> tuple:
         """
         Gets email content
         """
@@ -123,15 +122,23 @@ class GoogleEmailFetch(object):
             content = temp_message['payload']['body']['data']
             mail_body = base64.urlsafe_b64decode(content).decode('utf-8')
             arrival_date = temp_message.get('internalDate')
-            arrival_date = int(arrival_date)/1000
+            arrival_date = int(arrival_date)
+
+            arrival_date_future = int(((arrival_date/1000) + 60*60*2)*1000)
 
             # Get with soup or so the link we need
-            link = self.get_link(mail_body)
-            items_email[arrival_date] = link
+            link = self.get_link(mail_body)            
+            complete_link = self.garmin_link.format(link, arrival_date_future, arrival_date)
+            items_email[arrival_date] = {
+                'complete_link': complete_link,
+                'session_id': link
+                }
 
-        return items_email
+            max_time = np.max(list(items_email.keys()))
+            print(max_time)
 
-    
+        return items_email, max_time
+
     def get_labels(self):
         """
         Gets labels from all filters on gmail
@@ -160,5 +167,5 @@ if __name__ == "__main__":
     cred_path = '/home/edgar/Desktop/Projects/credentials_gmail.json'
     token_path = '/home/edgar/Desktop/Projects/token.pickle'
     gmail = GoogleEmailFetch(cred_path=cred_path, token_path=token_path)
-    messages = gmail.get_email_content()
-    print(messages)
+    messages, max_time = gmail.get_email_content()
+    print(messages[max_time].get('complete_link'))
