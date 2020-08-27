@@ -5,8 +5,13 @@ import sys
 import logging
 import os
 from datetime import datetime
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import matplotlib
+matplotlib.use('TkAgg')
 
-file_name_conf = datetime.strftime(datetime.now(), "log_%Y_%m_%d.log")
+now = datetime.strftime(datetime.now(), "%Y_%m_%d")
+file_name_conf = "log_{}.log".format(now)
 
 logging.basicConfig(
     format='%(levelname)s: %(asctime)s - %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]',
@@ -24,11 +29,11 @@ class GarminFetcher(object):
     From a given url, it will fetch the data from LiveTrack from garmin
     The url will be obtained when the activity starts
     """
-    def __init__(self, url):
+    def __init__(self, url, session_id):
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
         self.df_path: str = './'
-        self.df_name: str = "test.csv"
+        self.df_name: str = "{}_{}_.csv".format(session_id, now)
         self.df_full_path: str = os.path.join(self.df_path, self.df_name)
         self.current_row_length: int = 0
 
@@ -66,8 +71,7 @@ class GarminFetcher(object):
                 raise GarminException(1)
             else:
                 # self.save_file()
-                saved_file = self.check_file()
-                logging.info("Saved file: {}".format(saved_file))
+                self.check_file()
                 return self.df
 
         except GarminException as err:
@@ -80,7 +84,7 @@ class GarminFetcher(object):
             logging.error("Error: {}. Error line: {}".format(str(e), error_line))
             return None
     
-    def check_file(self) -> bool:
+    def check_file(self) -> tuple:
         """
         Checks whether downloaded file is at its most updated version 
         """
@@ -99,7 +103,12 @@ class GarminFetcher(object):
                 saved_file = True
             else:
                 saved_file = False
-
+                # Overwrite with most updated df with one saved on t - 1 
+                self.df = temp_df
+                logging.info("Did not save file. Taking previous df version as current one")
+        else: 
+            self.save_file()
+            logging.info("Created file: {} from scratch".format(self.df_full_path))
         return saved_file
 
     def save_file(self):
@@ -109,6 +118,26 @@ class GarminFetcher(object):
         # self.check_file()
         self.df.to_csv(self.df_full_path)
         logging.info("Saved file: {}".format(self.df_full_path))
+
+    def live_plot(self):
+        """
+        Real time plot of the data bein queried
+        """
+        df = self.fetch_data()
+
+        if len(df) > 100: 
+            self.temp_df = df.tail(1500)
+        else:
+            self.temp_df = df
+        
+        self.fig, self.ax = plt.subplots(1, 1)
+
+        def animate(i):
+            self.ax.clear()
+            self.ax.plot(self.temp_df['timestamp'], self.temp_df['hb'], color='indianred', linewidth=2)
+
+        ani = animation.FuncAnimation(self.fig, animate, interval=5000)
+        plt.show()
 
 class GarminException(Exception):
     """
@@ -126,7 +155,8 @@ class GarminException(Exception):
 
 if __name__ == "__main__":
     from tabulate import tabulate
+    import sys
     url = 'https://livetrack.garmin.com/services/session/98ace7a3-27b2-4198-8077-4e286e63c75f/trackpoints?requestTime=1598423101349&from=1598387200372'
-    test = GarminFetcher(url=url)         
+    test = GarminFetcher(url=url, session_id='test')         
     df = test.fetch_data()
     # print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
