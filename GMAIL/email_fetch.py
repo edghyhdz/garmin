@@ -42,6 +42,7 @@ class GoogleEmailFetch(object):
         self.regex_pattern_link = r'session\/(.*)\/token'
         self.garmin_link = 'https://livetrack.garmin.com/services/session/{0}/trackpoints?requestTime={1}&from={2}'
         self.session_id = None
+        self.complete_link = None
 
         # TODO: 
         # Add more structure to the Exception class         [ ]
@@ -84,7 +85,7 @@ class GoogleEmailFetch(object):
         # messages = service.users().messages()
     
         messages = service.users().messages().list(userId='me', labelIds=label_list,
-                                               maxResults=500).execute()
+                                               maxResults=2).execute()
 
         message_ids = []
         for msg in messages.get('messages'):
@@ -102,7 +103,7 @@ class GoogleEmailFetch(object):
 
         soup = bs(mail_body, 'lxml')
         href = soup.find('a', attrs={'title': 'Follow Me'}).get('href')
-
+        self.complete_link = href
         session_id = re.search(self.regex_pattern_link, href).group(1)
 
         return session_id
