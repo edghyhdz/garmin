@@ -45,7 +45,7 @@ try:
         Temporary function
         """
         global test
-        
+         
         df = test.fetch_data()
 
         if len(df) > 100: 
@@ -66,7 +66,7 @@ try:
         ticks = [datetime.strftime(datetime.fromtimestamp(x), '%H:%M:%S') for x in ax.get_xticks()]
         ax.set_xticklabels(ticks)
         ax.grid()
-    
+        
     ani = animation.FuncAnimation(fig, animate, interval=5000)
     plt.show()
     # print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
