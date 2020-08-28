@@ -32,7 +32,7 @@ class GarminFetcher(object):
     def __init__(self, url, session_id):
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
-        self.df_path: str = './hb_logs/'
+        self.df_path: str = './garmin/hb_logs/'
         self.df_name: str = "{}_{}_.csv".format(session_id, now)
         self.df_full_path: str = os.path.join(self.df_path, self.df_name)
         self.current_row_length: int = 0
@@ -90,7 +90,7 @@ class GarminFetcher(object):
         """
         file_exists = os.path.exists(self.df_full_path)
         saved_file = False
-
+        
         if file_exists: 
             temp_df = pd.read_csv(self.df_full_path, index_col=0)
             self.current_row_length = len(temp_df)
