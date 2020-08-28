@@ -54,8 +54,17 @@ class SendMessage(object):
         Connects to client and returns client method
         """
         try: 
+            if not self.auth_token:
+                raise SendMessageException(4)
+            if not self.auth_token:
+                raise SendMessageException(4) 
             client = Client(self.acc_sid, self.auth_token)
             return client
+        
+        except SendMessageException as err:
+            error_line = sys.exc_info()[-1].tb_lineno
+            logging.error("Error: {}. Error line: {}".format(err.error_codes[err.msg], error_line))
+            return None
 
         except Exception as err:
             error_line = sys.exc_info()[-1].tb_lineno
@@ -101,7 +110,8 @@ class SendMessageException(Exception):
     error_codes = {
         '1': "Not recognized key",
         '2': "Missing kwargs", 
-        '3': "Limit of messages reached!"
+        '3': "Limit of messages reached!",
+        '4': "Could not properly fetch account sid or auth token from the env variables"
     }
 
     def __init__(self, code):
