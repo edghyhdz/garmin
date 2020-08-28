@@ -32,7 +32,7 @@ class GarminFetcher(object):
     def __init__(self, url, session_id):
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
-        self.df_path: str = './garmin/hb_logs/'
+        self.df_path: str = './'
         self.df_name: str = "{}_{}_.csv".format(session_id, now)
         self.df_full_path: str = os.path.join(self.df_path, self.df_name)
         self.current_row_length: int = 0
@@ -60,8 +60,14 @@ class GarminFetcher(object):
             for item in data.get('trackPoints'):
                 time = item.get('dateTime')
                 hb = item.get('fitnessPointData').get('heartRateBeatsPerMin')
-                data_all.append((time, hb))
-            df = pd.DataFrame(data_all, columns=['t', 'hb'])
+                distance = item.get('fitnessPointData').get('distanceMeters')
+                try: 
+                    distance = float(distance)/1000
+                except Exception as e:
+                    distance = 0
+                    
+                data_all.append((time, hb, distance))
+            df = pd.DataFrame(data_all, columns=['t', 'hb', 'distance'])
 
             df['date'] = [datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.000Z") for x in df['t']]
             df['timestamp'] = [x.timestamp() for x in df['date']]
