@@ -41,7 +41,7 @@ class SendMessage(object):
                 
             # Have a counter limit for amount of messages to send
             self.message_counter = 0
-            self.message_limit = 1
+            self.message_limit = 15
             logging.info("Starting send message class!")
 
         except SendMessageException as err:
