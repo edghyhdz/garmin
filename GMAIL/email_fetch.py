@@ -27,7 +27,6 @@ class GoogleEmailFetch(object):
     def __init__(self, **kwargs):
         try: 
             for key in kwargs:
-                print("kwargs: {}".format(key))
                 if key in 'cred_path':
                     self.cred_path = kwargs[key]
                 elif key in 'token_path':
@@ -134,9 +133,7 @@ class GoogleEmailFetch(object):
                 'complete_link': complete_link,
                 'session_id': link
                 }
-
             max_time = np.max(list(items_email.keys()))
-            print(max_time)
 
         return items_email, max_time
 
