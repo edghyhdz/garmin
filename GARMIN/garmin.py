@@ -4,6 +4,7 @@ import requests
 import sys
 import logging
 import os
+import json
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -35,7 +36,10 @@ class GarminFetcher(object):
         self.df_path: str = './'
         self.df_name: str = "{}_{}_.csv".format(session_id, now)
         self.df_full_path: str = os.path.join(self.df_path, self.df_name)
+        self.json_name: str = "{}_{}_.json".format(session_id, now)
+        self.json_full_path: str = os.path.join(self.df_path, self.json_name)
         self.current_row_length: int = 0
+        self.data: list = None
 
         # TODO: 
         # Other parameters that might be needed                                             [ ]
@@ -73,10 +77,12 @@ class GarminFetcher(object):
             df['timestamp'] = [x.timestamp() for x in df['date']]
             self.df = df.sort_values(by='timestamp')
 
+            # To be saved as rawdata
+            self.data = data
+
             if self.df.empty:
                 raise GarminException(1)
             else:
-                # self.save_file()
                 self.check_file()
                 return self.df
 
@@ -121,29 +127,13 @@ class GarminFetcher(object):
         """
         Saves file with a given name 
         """
-        # self.check_file()
+        
         self.df.to_csv(self.df_full_path)
         logging.info("Saved file: {}".format(self.df_full_path))
 
-    def live_plot(self):
-        """
-        Real time plot of the data bein queried
-        """
-        df = self.fetch_data()
-
-        if len(df) > 100: 
-            self.temp_df = df.tail(1500)
-        else:
-            self.temp_df = df
-        
-        self.fig, self.ax = plt.subplots(1, 1)
-
-        def animate(i):
-            self.ax.clear()
-            self.ax.plot(self.temp_df['timestamp'], self.temp_df['hb'], color='indianred', linewidth=2)
-
-        ani = animation.FuncAnimation(self.fig, animate, interval=5000)
-        plt.show()
+        with open(self.json_full_path, 'w') as file:
+            json.dump(self.data, file)
+        logging.info("Saved json file: {}".format(self.df_full_path))
 
 class GarminException(Exception):
     """
@@ -165,4 +155,3 @@ if __name__ == "__main__":
     url = 'https://livetrack.garmin.com/services/session/98ace7a3-27b2-4198-8077-4e286e63c75f/trackpoints?requestTime=1598423101349&from=1598387200372'
     test = GarminFetcher(url=url, session_id='test')         
     df = test.fetch_data()
-    # print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
