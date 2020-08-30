@@ -1,16 +1,18 @@
 from tabulate import tabulate
 import sys
 import os
-# os.path.append("~/Desktop/Projects/Garmin_tekst/garmin/")
-# from GMAIL.email_fetch import GoogleEmailFetch, GmailExckeption
-from GARMIN.garmin import GarminException, GarminFetcher
-from TWILIO.send_message import SendMessageException, SendMessage
-from GMAIL.email_fetch import GmailException, GoogleEmailFetch
-
+import logging
+from time import sleep
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
 from datetime import datetime
+
+# Own libraries
+from GARMIN.garmin import GarminException, GarminFetcher
+from TWILIO.send_message import SendMessageException, SendMessage
+from GMAIL.email_fetch import GmailException, GoogleEmailFetch
+
 matplotlib.use('TkAgg')
 
 # TODO: 
@@ -19,41 +21,88 @@ matplotlib.use('TkAgg')
 # Change track points from garmin_link              [ ]
 # Make a real main function, as well as plot funct  [ ]
 # Make main task more ORGANIZED FAST!               [ ]
+# Messages part
 
+# Distances to reach and update phonelist via twilio
 distance_covered = [1.5, 5, 10, 15, 21, 40]
 
-try:    
-    cred_path = '/home/edgar/Desktop/Projects/credentials_gmail.json'
-    token_path = '/home/edgar/Desktop/Projects/token.pickle'
-    gmail = GoogleEmailFetch(cred_path=cred_path, token_path=token_path)
-    messages, max_time = gmail.get_email_content()
-    url_garmin = gmail.complete_link
-    
-    print(messages[max_time].get('complete_link'))
-    url = messages[max_time].get('complete_link')
-    session_id = messages[max_time].get('session_id')
-    test = GarminFetcher(url=url, session_id=session_id)       
-    df = test.fetch_data()
+# Env variables ##
+# Gmail
+cred_path = os.environ['CRED_PATH_GMAIL']
+token_path = os.environ['TOKEN_PATH_GMAIL']
 
-    # Messages part
-    acc_sid = os.environ.get('ACCOUNT_SID')
-    auth_token = os.environ.get('AUTH_TOKEN_TWILIO')
-    own_number = os.environ.get('OWN_NUMBER')
-    phone_to_send = os.environ.get("TEST_NUMBER")
+# Twilio
+acc_sid = os.environ.get('ACCOUNT_SID')
+auth_token = os.environ.get('AUTH_TOKEN_TWILIO')
+own_number = os.environ.get('OWN_NUMBER')
+phone_to_send = os.environ.get("TEST_NUMBER")
+
+# Check that all env variables are exported correctly -> none of them should return None
+env_variables = [cred_path, token_path, acc_sid, auth_token, own_number, phone_to_send]
+
+def namestr(obj, namespace):
+    return [name for name in namespace if namespace[name] is obj]
+
+for var in env_variables:
+    if not var:
+        strin_var = namestr(var)
+        logging.error("Env variable <{}> was not initiliazed".format(strin_var))
+        raise Exception
+
+try:    
+    # Initialize gmail fetch class
+    gmail = GoogleEmailFetch(cred_path=cred_path, token_path=token_path)
+    # Get email content and most recent garmin email
+    messages, max_time = gmail.get_email_content()
+    # Get email date 
+    email_date = datetime.fromtimestamp(max_time/1000).date()
+    logging.info("Email date: {}".format(email_date))
+
+    # While email is not that from today's date do not continue
+    delay = 60 # seconds
+    while True:
+        logging.info("Querying email folder again")
+        messages, max_time = gmail.get_email_content()
+        email_date = datetime.fromtimestamp(max_time/1000).date()
+        logging.info("Email date: {}".format(email_date))
+        if email_date == datetime.now().date():
+            logging.info("Found email!")
+            break
+        sleep(delay)
+
+    # Get url from garmin, to be send with an sms to the users on phone_list list
+    url_garmin = gmail.complete_link
+
+    # Get link where json data is fetched
+    logging.info(messages[max_time].get('complete_link'))
+    url = messages[max_time].get('complete_link')
+
+    # Get session id -> to be used to save csv files with heart bit and distance data
+    session_id = messages[max_time].get('session_id')
+
+    # Initilize garminfetcher class
+    garmin_fetcher = GarminFetcher(url=url, session_id=session_id) 
+
+    # Get data (if any)      
+    df = garmin_fetcher.fetch_data()
+
+    # Initilaize message class
     message = SendMessage(acc_sid=acc_sid, auth_token=auth_token, own_number=own_number, phone_list=[phone_to_send])
 
-    fig, ax = plt.subplots(1, 2)
+    # Initialize figure to plot real time
+    fig, ax = plt.subplots(1, 2, figsize=(15, 10))
 
+    # Function to animate realtime plot
     def animate(i):
         """
         Real time plot of the data bein queried
         Temporary function
         """
-        global test
+        global garmin_fetcher
         global distance_covered
 
         try: 
-            df = test.fetch_data()
+            df = garmin_fetcher.fetch_data()
 
             if len(df) > 100: 
                 temp_df = df.tail(300)
@@ -68,10 +117,10 @@ try:
                 if dis < current_distance:
                     idx_pop = distance_covered.index(dis)
                     distance_covered.pop(idx_pop)
-                    print("Popping out: {}".format(dis))
-                    print("Distances to go: {}".format(distance_covered))
+                    logging.info("Popping out: {}".format(dis))
+                    logging.info("Distances to go: {}".format(distance_covered))
                     message.send_messages(
-                        "Edgar has covered {} km already! Check his race under: {}".format(
+                        "Edgar has covered {} km already!\n Check his race under: {}".format(
                             current_distance, url_garmin))
                     break
                 
@@ -80,25 +129,21 @@ try:
                 # Stop it from sending more
                 # message.message_counter = 10
 
-            ax[0].clear()
-            ax[1].clear()
-            ax[0].plot(temp_df['timestamp'], temp_df['hb'], color='indianred', linewidth=2)  
-            ax[0].tick_params(rotation=90, axis='x')
-            ticks = [datetime.strftime(datetime.fromtimestamp(x), '%H:%M:%S') for x in ax[0].get_xticks()]
-            ax[0].set_xticklabels(ticks)
-            ax[0].grid()
-
-            ax[1].plot(temp_df['timestamp'], temp_df['distance'], color='indianred', linewidth=2)  
-            ax[1].tick_params(rotation=90, axis='x')
-            ticks = [datetime.strftime(datetime.fromtimestamp(x), '%H:%M:%S') for x in ax[1].get_xticks()]
-            ax[1].set_xticklabels(ticks)
-            ax[1].grid()
-
+            for k, concept in zip(range(0, 2), ('hb', 'distance')):
+                ax[k].clear()
+                ax[k].plot(temp_df['timestamp'], temp_df[concept], color='indianred', linewidth=2)  
+                ax[k].tick_params(rotation=90, axis='x')
+                ticks = [datetime.strftime(datetime.fromtimestamp(x), '%H:%M:%S') for x in ax[k].get_xticks()]
+                ax[k].set_xticklabels(ticks)
+                ax[k].grid()
 
         except Exception as e:
-            print(e)
+            error_line = sys.exc_info()[-1].tb_lineno
+            logging.error("Error: {}. Error line: {}".format(e, error_line))
+
     ani = animation.FuncAnimation(fig, animate, interval=5000)
     plt.show()
-    # print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
+
 except Exception as e:
-    print(str(e))
+    error_line = sys.exc_info()[-1].tb_lineno
+    logging.error("Error: {}. Error line: {}".format(e, error_line))
