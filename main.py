@@ -25,8 +25,8 @@ distance_covered = [1.5, 5, 10, 15, 21, 40]
 
 # Env variables ##
 # Gmail
-cred_path = os.environ['CRED_PATH_GMAIL']
-token_path = os.environ['TOKEN_PATH_GMAIL']
+cred_path = os.environ.get('CRED_PATH_GMAIL')
+token_path = os.environ.get('TOKEN_PATH_GMAIL')
 
 # Twilio
 acc_sid = os.environ.get('ACCOUNT_SID')
@@ -37,16 +37,30 @@ phone_to_send = os.environ.get("TEST_NUMBER")
 # Check that all env variables are exported correctly -> none of them should return None
 env_variables = [cred_path, token_path, acc_sid, auth_token, own_number, phone_to_send]
 
-def namestr(obj, namespace):
-    return [name for name in namespace if namespace[name] is obj]
+class EnvVarException(Exception):
+    """
+    Class to handle exceptions for the Main function
+    """
+    error_codes = {
+        '0': "CRED_PATH_GMAIL",
+        '1': "TOKEN_PATH_GMAIL",
+        '2': "ACCOUNT_SID",
+        '3': "AUTH_TOKEN_TWILIO",
+        '4': "OWN_NUMBER",
+        '5': "TEST_NUMBER",
+    }
 
-for var in env_variables:
-    if not var:
-        strin_var = namestr(var)
-        logging.error("Env variable <{}> was not initiliazed".format(strin_var))
-        raise Exception
+    def __init__(self, code):
+        self.code = code
+        self.msg = str(code)
 
-try:    
+try:   
+
+    for k, var in enumerate(env_variables):
+        if not var:
+            logging.error("At least one variable returned None")
+            raise EnvVarException(k)
+
     # Initialize gmail fetch class
     gmail = GoogleEmailFetch(cred_path=cred_path, token_path=token_path)
     # Get email content and most recent garmin email
@@ -140,6 +154,10 @@ try:
 
     ani = animation.FuncAnimation(fig, animate, interval=5000)
     plt.show()
+
+except EnvVarException as e:
+    error_line = sys.exc_info()[-1].tb_lineno
+    logging.error("Variable  <{}> was not initilized. Error line: {}".format(e.error_codes[e.msg], error_line))
 
 except Exception as e:
     error_line = sys.exc_info()[-1].tb_lineno
