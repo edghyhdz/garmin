@@ -19,6 +19,8 @@ matplotlib.use('TkAgg')
 # Add a CONFIG CLASS!                               [ ]
 # Add exception class for both classess             [ ]
 # Initialize environment variables from code        [ ]
+# API Calls to start script                         [ ]
+# Plotly dashboard                                  [ ]
 
 # Distances to reach and update phonelist via twilio
 distance_covered = [1.5, 5, 10, 15, 21, 40]
