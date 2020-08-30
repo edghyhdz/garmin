@@ -11,10 +11,8 @@ import sys
 import base64
 from bs4 import BeautifulSoup as bs
 import re
-
-
-
 import logging
+
 # Some code was taken from the official Gmail API website
 
 # If modifying these scopes, delete the file token.pickle.
@@ -46,7 +44,6 @@ class GoogleEmailFetch(object):
         # TODO: 
         # Add more structure to the Exception class         [ ]
         # Add more CONFIG CLASS!                            [ ]
-        # Change track points from garmin_link              [ ]
 
     def connect(self):
         """
@@ -60,6 +57,7 @@ class GoogleEmailFetch(object):
         if os.path.exists(self.token_path):
             with open(self.token_path, 'rb') as token:
                 creds = pickle.load(token)
+                
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -80,9 +78,7 @@ class GoogleEmailFetch(object):
         """
         This method returns emails 
         """
-        service = self.connect()
-        # messages = service.users().messages()
-    
+        service = self.connect()   
         messages = service.users().messages().list(userId='me', labelIds=label_list,
                                                maxResults=2).execute()
 
@@ -90,7 +86,6 @@ class GoogleEmailFetch(object):
         for msg in messages.get('messages'):
             msg_id = msg.get('id')
             message_ids.append(msg_id)
-
 
         return message_ids
     
@@ -162,8 +157,8 @@ class GmailException(Exception):
 
 
 if __name__ == "__main__":
-    cred_path = '/home/edgar/Desktop/Projects/credentials_gmail.json'
-    token_path = '/home/edgar/Desktop/Projects/token.pickle'
+    cred_path = os.environ['CRED_PATH_GMAIL']
+    token_path = os.environ['TOKEN_PATH_GMAIL']
     gmail = GoogleEmailFetch(cred_path=cred_path, token_path=token_path)
     messages, max_time = gmail.get_email_content()
     print(messages[max_time].get('complete_link'))
