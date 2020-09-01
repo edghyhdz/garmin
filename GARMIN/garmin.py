@@ -9,6 +9,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
+
+# Own libraries
+from API.api import *
+
 matplotlib.use('TkAgg')
 
 now = datetime.strftime(datetime.now(), "%Y_%m_%d")
@@ -48,6 +52,7 @@ class GarminFetcher(object):
         # Error handling class, improve                                                     [ ]
         # Include method to check whether data downloaded its at it most updated version    [ ]
         # Data frame name should include url identifier (more than one even/day)            [ ]
+        # db zu tun stuff, get user id depending on who send request?                       [ ]
 
     def fetch_data(self):
         """
@@ -134,6 +139,12 @@ class GarminFetcher(object):
         with open(self.json_full_path, 'w') as file:
             json.dump(self.data, file)
         logging.info("Saved json file: {}".format(self.df_full_path))
+        
+        new_event = Races(user_id=1, ongoing_event=True, data_path=self.df_full_path)
+        db.session.add(new_event)
+        db.session.commit()
+        logging.info("Commited to db, saved path")
+
 
 class GarminException(Exception):
     """
