@@ -16,6 +16,7 @@ from GMAIL.email_fetch import GmailException, GoogleEmailFetch
 matplotlib.use('TkAgg')
 
 # TODO: 
+# NEED TO RESTART DB -> MODIFIED TABLE EVENTS       [ ]
 # Add a CONFIG CLASS!                               [ ]
 # Add exception class for both classess             [ ]
 # Initialize environment variables from code        [ ]
