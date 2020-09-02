@@ -34,7 +34,9 @@ class GarminFetcher(object):
     From a given url, it will fetch the data from LiveTrack from garmin
     The url will be obtained when the activity starts
     """
-    def __init__(self, url, session_id):
+    def __init__(self, url, session_id, user_id):
+        self.user_id: str = user_id
+        self.session_id: str = session_id
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
         self.df_path: str = './'
@@ -53,6 +55,7 @@ class GarminFetcher(object):
         # Include method to check whether data downloaded its at it most updated version    [ ]
         # Data frame name should include url identifier (more than one even/day)            [ ]
         # db zu tun stuff, get user id depending on who send request?                       [ ]
+        # Add possibility to run with or without API request                                [ ]
 
     def fetch_data(self):
         """
@@ -140,7 +143,7 @@ class GarminFetcher(object):
             json.dump(self.data, file)
         logging.info("Saved json file: {}".format(self.df_full_path))
         
-        new_event = Races(user_id=1, ongoing_event=True, data_path=self.df_full_path)
+        new_event = Events(user_id=self.user_id, session_id=self.session_id, ongoing_event=True, data_path=self.df_full_path)
         db.session.add(new_event)
         db.session.commit()
         logging.info("Commited to db, saved path")
