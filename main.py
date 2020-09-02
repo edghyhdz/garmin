@@ -72,16 +72,16 @@ try:
     logging.info("Email date: {}".format(email_date))
 
     # While email is not that from today's date do not continue
-    delay = 60 # seconds
-    while True:
-        logging.info("Querying email folder again")
-        messages, max_time = gmail.get_email_content()
-        email_date = datetime.fromtimestamp(max_time/1000).date()
-        logging.info("Email date: {}".format(email_date))
-        if email_date == datetime.now().date():
-            logging.info("Found email!")
-            break
-        sleep(delay)
+    # delay = 60 # seconds
+    # while True:
+    #     logging.info("Querying email folder again")
+    #     messages, max_time = gmail.get_email_content()
+    #     email_date = datetime.fromtimestamp(max_time/1000).date()
+    #     logging.info("Email date: {}".format(email_date))
+    #     if email_date == datetime.now().date():
+    #         logging.info("Found email!")
+    #         break
+    #     sleep(delay)
 
     # Get url from garmin, to be send with an sms to the users on phone_list list
     url_garmin = gmail.complete_link
@@ -103,10 +103,11 @@ try:
     message = SendMessage(acc_sid=acc_sid, auth_token=auth_token, own_number=own_number, phone_list=[phone_to_send])
 
     # Initialize figure to plot real time
-    fig, ax = plt.subplots(1, 2, figsize=(15, 10))
+    nb_plots = 2
+    fig, ax = plt.subplots(nb_plots, 1, figsize=(15, 10), sharex=True)
 
     # Function to animate realtime plot
-    def animate(i):
+    def animate(i, nb_plots=nb_plots):
         """
         Real time plot of the data bein queried
         Temporary function
@@ -142,14 +143,14 @@ try:
                 # Stop it from sending more
                 # message.message_counter = 10
 
-            for k, concept in zip(range(0, 2), ('hb', 'distance')):
+            for k, concept in zip(range(0, nb_plots), ('hb', 'distance')):
                 ax[k].clear()
                 ax[k].plot(temp_df['timestamp'], temp_df[concept], color='indianred', linewidth=2)  
                 ax[k].tick_params(rotation=90, axis='x')
                 ticks = [datetime.strftime(datetime.fromtimestamp(x), '%H:%M:%S') for x in ax[k].get_xticks()]
                 ax[k].set_xticklabels(ticks)
                 ax[k].grid()
-
+            
         except Exception as e:
             error_line = sys.exc_info()[-1].tb_lineno
             logging.error("Error: {}. Error line: {}".format(e, error_line))
