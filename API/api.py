@@ -1,17 +1,21 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 import uuid
+import jwt
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import create_engine
 from json import dumps
+from functools import wraps
+import os
+import logging
 
-
-e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin.db")
+e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_data.db")
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'thisissecret'
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_data.db"
 
 db = SQLAlchemy(app)
 
@@ -31,7 +35,7 @@ class User(db.Model):
     password = db.Column(db.String(80))
     admin = db.Column(db.Boolean)
 
-class Event(db.Model):
+class Events(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     starting_date = db.Column(db.DateTime)
     finished_date = db.Column(db.DateTime)
@@ -39,8 +43,58 @@ class Event(db.Model):
     data_path = db.Column(db.String(50))
     user_id = db.Column(db.Integer)
 
+def token_required(f): 
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+
+        if "x-access-token" in request.headers:
+            token = request.headers['x-access-token']
+        if not token:
+            return jsonify({'message': 'Token is missing'}), 401
+
+        try: 
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+            current_user = User.query.filter_by(public_id=data['public_id']).first()
+        except:
+            return jsonify({'message': "Token is invalid"}), 401
+        
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
+@app.route("/start", methods=['POST'])
+@token_required
+def start_event(current_user): 
+    """[summary]
+
+    Args:
+        current_user ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    if not current_user.admin:
+        return jsonify({'message': "You have no authorization to start an event"})
+    
+    payload = None
+
+    data = request.get_json()
+    if 'payload' in data.keys():
+        payload = data.get('payload')
+
+    if not payload:
+        return jsonify({'message': "Incorrect data provided"})
+
+    if 'start_race' in payload:
+        os.system(". /home/edgar/Desktop/Projects/Garmin_test/run_all.sh")
+        print("Starting effin event!")
+        return jsonify({'message': 'Starting event at: {}'.format(datetime.now())})
+
+
 @app.route("/user", methods=['GET'])
-def get_all_users():
+@token_required
+def get_all_users(current_user):
     """[summary]
 
     Returns:
@@ -58,9 +112,10 @@ def get_all_users():
         output.append(user_data)
 
     return jsonify({'users': output})
-
+    
 @app.route("/user/<public_id>", methods=['GET'])
-def get_one_user(public_id):
+@token_required
+def get_one_user(current_user, public_id):
     user = User.query.filter_by(public_id=public_id).first()
 
     if not user:
@@ -76,9 +131,20 @@ def get_one_user(public_id):
 
     return jsonify({'user': user_data})
 
+@app.route("/test", methods=['POST'])
+def get_header():
+    """Test function to see header of requester
+
+    Returns:
+        [type]: [description]
+    """
+    data = request.get_json()
+    data_request = request
+    return jsonify(data_request.get_json())
 
 @app.route('/user', methods=['POST'])
-def create_user():
+@token_required
+def create_user(current_user):
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method="sha256")
 
@@ -89,12 +155,51 @@ def create_user():
     return jsonify({'message': 'New user created!'})
 
 @app.route("/user/<public_id>", methods=['PUT'])
-def promote_user(public_id):
-    return ""
+@token_required
+def promote_user(current_user, public_id):
+
+    user = User.query.filter_by(public_id=public_id).first()
+
+    if not user:
+        return jsonify({'message': "No user found!"})
+
+    user.admin = True
+    db.session.commit()
+    
+    return jsonify({"message": "user has been promoted"})
 
 @app.route("/users/<public_id>", methods=['DELETE'])
-def delete_user(public_id):
-    return ""
+@token_required
+def delete_user(current_user, public_id):
+    user = User.query.filter_by(public_id=public_id).first()
+
+    if not user:
+        return jsonify({'message': "No user found!"})
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': "user has been deleted"})
+
+@app.route("/login", methods=['GET'])
+def login():
+    auth = request.authorization
+    if not auth or not auth.username or not auth.password:
+        return make_response("Could not verify", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+    user = User.query.filter_by(name=auth.username).first()
+    is_admin = user.admin
+
+    if not is_admin:
+        return make_response("You have no authorization to request a token", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+    if not user: 
+        return make_response("Could not find user", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
+
+    if check_password_hash(user.password, auth.password) and is_admin: 
+        token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow() + timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        return jsonify({'token': token.decode('UTF-8')})
+
+    return make_response("Could not verify", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 if __name__ == "__main__":
     app.run(debug=True)
