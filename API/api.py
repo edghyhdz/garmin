@@ -42,6 +42,7 @@ class Events(db.Model):
     ongoing_event = db.Column(db.Boolean)
     data_path = db.Column(db.String(50))
     user_id = db.Column(db.Integer)
+    session_id = db.Collumn(db.String(50))
 
 def token_required(f): 
     @wraps(f)
