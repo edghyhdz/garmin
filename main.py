@@ -36,6 +36,9 @@ auth_token = os.environ.get('AUTH_TOKEN_TWILIO')
 own_number = os.environ.get('OWN_NUMBER')
 phone_to_send = os.environ.get("TEST_NUMBER")
 
+#DB User ID
+public_user_id = os.environ.get("DB_USER_ID")
+
 # Check that all env variables are exported correctly -> none of them should return None
 env_variables = [cred_path, token_path, acc_sid, auth_token, own_number, phone_to_send]
 
@@ -94,7 +97,7 @@ try:
     session_id = messages[max_time].get('session_id')
 
     # Initilize garminfetcher class
-    garmin_fetcher = GarminFetcher(url=url, session_id=session_id) 
+    garmin_fetcher = GarminFetcher(url=url, session_id=session_id, user_id=public_user_id) 
 
     # Get data (if any)      
     df = garmin_fetcher.fetch_data()
