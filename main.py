@@ -12,6 +12,7 @@ from datetime import datetime
 from GARMIN.garmin import GarminException, GarminFetcher
 from TWILIO.send_message import SendMessageException, SendMessage
 from GMAIL.email_fetch import GmailException, GoogleEmailFetch
+from API.api import User, Events, db
 
 matplotlib.use('TkAgg')
 
@@ -47,9 +48,9 @@ public_user_id = os.environ.get("DB_USER_ID")
 # Check that all env variables are exported correctly -> none of them should return None
 env_variables = [cred_path, token_path, acc_sid, auth_token, own_number, phone_to_send]
 
-class EnvVarException(Exception):
+class MainException(Exception):
     """
-    Class to handle exceptions for the Main function
+    Class to handle exceptions for the main script function
     """
     error_codes = {
         '0': "CRED_PATH_GMAIL",
@@ -58,6 +59,7 @@ class EnvVarException(Exception):
         '3': "AUTH_TOKEN_TWILIO",
         '4': "OWN_NUMBER",
         '5': "TEST_NUMBER",
+        '6': "One script is already running"
     }
 
     def __init__(self, code):
@@ -69,7 +71,7 @@ try:
     for k, var in enumerate(env_variables):
         if not var:
             logging.error("At least one variable returned None")
-            raise EnvVarException(k)
+            raise MainException(k)
 
     # Initialize gmail fetch class
     gmail = GoogleEmailFetch(cred_path=cred_path, token_path=token_path)
@@ -103,6 +105,12 @@ try:
 
     # Initilize garminfetcher class
     garmin_fetcher = GarminFetcher(url=url, session_id=session_id, user_id=public_user_id, event_type=event_type) 
+    start_script = garmin_fetcher.check_ongoing_event()
+
+    # Start script only if ongoing event is false
+    if not start_script:
+        logging.info("Start script?: {}".format(start_script))
+        raise MainException(6)
 
     # Get data (if any)      
     df = garmin_fetcher.fetch_data()
@@ -166,10 +174,24 @@ try:
     ani = animation.FuncAnimation(fig, animate, interval=5000)
     plt.show()
 
-except EnvVarException as e:
+except MainException as e:
     error_line = sys.exc_info()[-1].tb_lineno
-    logging.error("Variable  <{}> was not initilized. Error line: {}".format(e.error_codes[e.msg], error_line))
+    # Related to started code
+    if e.msg == "6":
+        event = Events.query.filter_by(session_id=garmin_fetcher.session_id).first()
+        session_id_db = event.session_id
+        logging.error("Error: {}. Event session id: {}. Error line: {}".format(
+            e.error_codes[e.msg], session_id_db, error_line))    
+    else: 
+        logging.error("Variable  <{}> was not initilized. Error line: {}".format(e.error_codes[e.msg], error_line))
 
 except Exception as e:
     error_line = sys.exc_info()[-1].tb_lineno
     logging.error("Error: {}. Error line: {}".format(e, error_line))
+
+except KeyboardInterrupt:
+    logging.info("Shuting down app with KeyboardInterrupt") 
+    event = Events.query.filter_by(session_id=garmin_fetcher.session_id).first()
+    event.ongoing_event = False
+    event.finished_date = datetime.now()
+    db.session.commit()
