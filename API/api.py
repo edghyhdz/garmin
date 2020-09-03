@@ -10,23 +10,23 @@ from functools import wraps
 import os
 import logging
 
-e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_data.db")
+e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db")
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'thisissecret'
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_data.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db"
 
 db = SQLAlchemy(app)
 
 
 # TODO:
-# GET DB Functions into garmin class                                [ ]
-# Check if a event is currently ongoing                             [ ]
-# Update event when finished                                        [ ]
-# Save path of csv and json to be queried later on (?)              [ ]
-# Start email fetcher by request                                    [ ]
-# Stop script by request                                            [ ]
+# GET DB Functions into garmin class                                [X]
+# Check if a event is currently ongoing                             [X]
+# Update event when finished                                        [X]
+# Save path of csv and json to be queried later on (?)              [X]
+# Start email fetcher by request                                    [X]
+# Stop script by API request                                        [ ]
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +35,7 @@ class User(db.Model):
     password = db.Column(db.String(80))
     admin = db.Column(db.Boolean)
 
+
 class Events(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     starting_date = db.Column(db.DateTime)
@@ -42,7 +43,9 @@ class Events(db.Model):
     ongoing_event = db.Column(db.Boolean)
     data_path = db.Column(db.String(50))
     user_id = db.Column(db.Integer)
-    session_id = db.Collumn(db.String(50))
+    session_id = db.Column(db.String(50))
+    event_type = db.Column(db.Integer)
+
 
 def token_required(f): 
     @wraps(f)
@@ -131,17 +134,6 @@ def get_one_user(current_user, public_id):
     user_data['admin'] = user.admin
 
     return jsonify({'user': user_data})
-
-@app.route("/test", methods=['POST'])
-def get_header():
-    """Test function to see header of requester
-
-    Returns:
-        [type]: [description]
-    """
-    data = request.get_json()
-    data_request = request
-    return jsonify(data_request.get_json())
 
 @app.route('/user', methods=['POST'])
 @token_required
