@@ -17,6 +17,7 @@ matplotlib.use('TkAgg')
 
 # TODO: 
 # NEED TO RESTART DB -> MODIFIED TABLE EVENTS       [ ]
+# Make <event_type> an arg variable                 [ ]
 # Add a CONFIG CLASS!                               [ ]
 # Add exception class for both classess             [ ]
 # Initialize environment variables from code        [ ]
@@ -25,6 +26,9 @@ matplotlib.use('TkAgg')
 
 # Distances to reach and update phonelist via twilio
 distance_covered = [1.5, 5, 10, 15, 21, 40]
+
+# Event type 0: Normal, 1: Run, 2: Cycling
+event_type = 0
 
 # Env variables ##
 # Gmail
@@ -98,7 +102,7 @@ try:
     session_id = messages[max_time].get('session_id')
 
     # Initilize garminfetcher class
-    garmin_fetcher = GarminFetcher(url=url, session_id=session_id, user_id=public_user_id) 
+    garmin_fetcher = GarminFetcher(url=url, session_id=session_id, user_id=public_user_id, event_type=event_type) 
 
     # Get data (if any)      
     df = garmin_fetcher.fetch_data()
