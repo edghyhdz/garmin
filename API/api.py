@@ -27,6 +27,10 @@ db = SQLAlchemy(app)
 # Save path of csv and json to be queried later on (?)              [X]
 # Start email fetcher by request                                    [X]
 # Stop script by API request                                        [ ]
+# Stop event based on session id? return it with request            [ ]
+# How to pass it into the main script as args?                      [ ]
+# How to let request run script and let it running outside 
+# of the shell, to not block other scripts inside API               [ ]
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,6 +74,34 @@ def token_required(f):
 @app.route("/start", methods=['POST'])
 @token_required
 def start_event(current_user): 
+    """[summary]
+
+    Args:
+        current_user ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    if not current_user.admin:
+        return jsonify({'message': "You have no authorization to start an event"})
+    
+    payload = None
+
+    data = request.get_json()
+    if 'payload' in data.keys():
+        payload = data.get('payload')
+
+    if not payload:
+        return jsonify({'message': "Incorrect data provided"})
+
+    if 'start_race' in payload:
+        os.system(". /home/edgar/Desktop/Projects/Garmin_test/run_all.sh")
+        print("Starting effin event!")
+        return jsonify({'message': 'Starting event at: {}'.format(datetime.now())})
+
+@app.route("/start", methods=['POST'])
+@token_required
+def stop_event(current_user): 
     """[summary]
 
     Args:
