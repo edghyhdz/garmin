@@ -17,12 +17,12 @@ from API.api import User, Events, db
 matplotlib.use('TkAgg')
 
 # TODO: 
-# NEED TO RESTART DB -> MODIFIED TABLE EVENTS       [ ]
-# Make <event_type> an arg variable                 [ ]
+# NEED TO RESTART DB -> MODIFIED TABLE EVENTS       [X]
+# Make <event_type> an arg variable for API REQUEST [ ]
 # Add a CONFIG CLASS!                               [ ]
 # Add exception class for both classess             [ ]
-# Initialize environment variables from code        [ ]
-# API Calls to start script                         [ ]
+# Initialize environment variables from code        [X]
+# API Calls to start script                         [X]
 # Plotly dashboard                                  [ ]
 
 # Distances to reach and update phonelist via twilio
