@@ -34,9 +34,11 @@ class GarminFetcher(object):
     From a given url, it will fetch the data from LiveTrack from garmin
     The url will be obtained when the activity starts
     """
-    def __init__(self, url, session_id, user_id):
+    def __init__(self, url, session_id, user_id, event_type):
+        self.event_type: int = event_type
         self.user_id: str = user_id
         self.session_id: str = session_id
+        self.start_script: bool = True
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
         self.df_path: str = './'
@@ -143,10 +145,35 @@ class GarminFetcher(object):
             json.dump(self.data, file)
         logging.info("Saved json file: {}".format(self.df_full_path))
         
-        new_event = Events(user_id=self.user_id, session_id=self.session_id, ongoing_event=True, data_path=self.df_full_path)
-        db.session.add(new_event)
-        db.session.commit()
-        logging.info("Commited to db, saved path")
+        event = Events.query.filter_by(session_id=self.session_id).first()
+
+        if not event:
+            new_event = Events(
+                user_id=self.user_id, 
+                session_id=self.session_id,
+                ongoing_event=True, 
+                data_path=self.df_full_path,
+                event_type=self.event_type)
+
+            db.session.add(new_event)
+            db.session.commit()
+            logging.info("Commited to db, saved path")
+    
+    def check_ongoing_event(self):
+        """
+        Checks whether there is an ongoing event recorded on the DB
+        """
+        is_ongoing = None
+        event = Events.query.filter_by(session_id=self.session_id).first() 
+
+        if event:
+            is_ongoing = event.ongoing_event
+
+        # If it's ongoing then do not start script
+        if is_ongoing:
+            self.start_script = False
+
+
 
 
 class GarminException(Exception):
