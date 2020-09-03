@@ -147,17 +147,22 @@ class GarminFetcher(object):
         
         event = Events.query.filter_by(session_id=self.session_id).first()
 
+        # Create new record in events table
         if not event:
             new_event = Events(
                 user_id=self.user_id, 
                 session_id=self.session_id,
                 ongoing_event=True, 
                 data_path=self.df_full_path,
-                event_type=self.event_type)
+                event_type=self.event_type,
+                starting_date=datetime.now())
 
             db.session.add(new_event)
             db.session.commit()
             logging.info("Commited to db, saved path")
+        else:
+            event.ongoing_event = True
+            db.session.commit()
     
     def check_ongoing_event(self):
         """
@@ -170,11 +175,13 @@ class GarminFetcher(object):
             is_ongoing = event.ongoing_event
 
         # If it's ongoing then do not start script
+        # If its not ongoing but event exists then start script
         if is_ongoing:
             self.start_script = False
+        else:
+            self.start_script = True
 
-
-
+        return self.start_script
 
 class GarminException(Exception):
     """
@@ -193,6 +200,6 @@ class GarminException(Exception):
 if __name__ == "__main__":
     from tabulate import tabulate
     import sys
-    url = 'https://livetrack.garmin.com/services/session/98ace7a3-27b2-4198-8077-4e286e63c75f/trackpoints?requestTime=1598423101349&from=1598387200372'
+    url = 'garmin_url'
     test = GarminFetcher(url=url, session_id='test')         
     df = test.fetch_data()
