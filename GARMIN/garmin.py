@@ -149,13 +149,14 @@ class GarminFetcher(object):
 
         # Create new record in events table
         if not event:
+            starting_date = self.df['date'].tolist()[-1]
             new_event = Events(
                 user_id=self.user_id, 
                 session_id=self.session_id,
                 ongoing_event=True, 
                 data_path=self.df_full_path,
                 event_type=self.event_type,
-                starting_date=datetime.now())
+                starting_date=starting_date)
 
             db.session.add(new_event)
             db.session.commit()
