@@ -18,7 +18,7 @@ matplotlib.use('TkAgg')
 
 # TODO: 
 # NEED TO RESTART DB -> MODIFIED TABLE EVENTS       [X]
-# Make <event_type> an arg variable for API REQUEST [ ]
+# Make <event_type> an arg variable for API REQUEST [X]
 # Add a CONFIG CLASS!                               [ ]
 # Add exception class for both classess             [ ]
 # Initialize environment variables from code        [X]
