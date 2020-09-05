@@ -29,11 +29,11 @@ db = SQLAlchemy(app)
 # Update event when finished                                        [X]
 # Save path of csv and json to be queried later on (?)              [X]
 # Start email fetcher by request                                    [X]
-# Stop script by API request                                        [ ]
+# Stop script by API request                                        [X]
 # Stop event based on session id? return it with request            [ ]
-# How to pass it into the main script as args?                      [ ]
+# How to pass it into the main script as args?                      [X]
 # How to let request run script and let it running outside 
-# of the shell, to not block other scripts inside API               [ ]
+# of the shell, to not block other scripts inside API               [X]
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
