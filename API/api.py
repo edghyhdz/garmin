@@ -10,6 +10,7 @@ from functools import wraps
 import os
 import logging
 from subprocess import call
+from time import sleep
 
 e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db")
 
@@ -96,11 +97,9 @@ def start_event(current_user):
         return jsonify({'message': "Incorrect data provided"})
 
     if 'start_race' in payload:
-        test = open('/home/edgar/Desktop/Projects/Garmin_test/listener', 'w')
-        
-        # call('. /home/edgar/Desktop/Projects/Garmin_test/run_all.sh', shell=True)
-        # os.system(". /home/edgar/Desktop/Projects/Garmin_test/run_all.sh")
+        text = open('/home/edgar/Desktop/Projects/Garmin_test/listener', 'w')
         print("Starting effin event!")
+
         return jsonify({'message': 'Starting event at: {}'.format(datetime.now())})
 
 @app.route("/start", methods=['POST'])
