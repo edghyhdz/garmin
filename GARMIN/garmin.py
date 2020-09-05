@@ -56,8 +56,8 @@ class GarminFetcher(object):
         # Error handling class, improve                                                     [ ]
         # Include method to check whether data downloaded its at it most updated version    [ ]
         # Data frame name should include url identifier (more than one even/day)            [ ]
-        # db zu tun stuff, get user id depending on who send request?                       [ ]
-        # Add possibility to run with or without API request                                [ ]
+        # db zu tun stuff, get user id depending on who send request?                       [X]
+        # Add possibility to run with or without API request                                [X]
 
     def fetch_data(self):
         """
