@@ -77,13 +77,13 @@ def token_required(f):
 @app.route("/api/start", methods=['POST'])
 @token_required
 def start_event(current_user): 
-    """[summary]
+    """Starts logging event data
 
     Args:
-        current_user ([type]): [description]
+        current_user ([str]): current user id, used to find details in db
 
     Returns:
-        [type]: [description]
+        [json]: Message json, whether transaction was successful or not
     """
     if not current_user.admin:
         return jsonify({'message': "You have no authorization to start an event"})
@@ -112,13 +112,13 @@ def start_event(current_user):
 @app.route("/api/stop_event", methods=['POST'])
 @token_required
 def stop_event(current_user): 
-    """[summary]
+    """Stops current event
 
     Args:
-        current_user ([type]): [description]
-
+        current_user ([str]): current user id, used to find details in db]
+        
     Returns:
-        [type]: [description]
+        [json]: Message json, whether transaction was successful or not
     """
     if not current_user.admin:
         return jsonify({'message': "You have no authorization to start an event"})
