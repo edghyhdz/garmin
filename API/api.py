@@ -9,8 +9,9 @@ from json import dumps
 from functools import wraps
 import os
 import logging
-from subprocess import call
+import subprocess
 from time import sleep
+
 
 e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db")
 
@@ -73,7 +74,7 @@ def token_required(f):
 
     return decorated
 
-@app.route("/start", methods=['POST'])
+@app.route("/api/start", methods=['POST'])
 @token_required
 def start_event(current_user): 
     """[summary]
@@ -95,14 +96,20 @@ def start_event(current_user):
 
     if not payload:
         return jsonify({'message': "Incorrect data provided"})
+    
+    if not 'activity' in data.keys():
+        return jsonify({'message': "Incorrect data provided"})
+
+    activity = data.get('activity')
 
     if 'start_race' in payload:
         text = open('/home/edgar/Desktop/Projects/Garmin_test/listener', 'w')
-        print("Starting effin event!")
+        text.write('{}'.format(activity))
+        logging.info("Starting event")
 
         return jsonify({'message': 'Starting event at: {}'.format(datetime.now())})
 
-@app.route("/start", methods=['POST'])
+@app.route("/api/stop_event", methods=['POST'])
 @token_required
 def stop_event(current_user): 
     """[summary]
@@ -125,10 +132,22 @@ def stop_event(current_user):
     if not payload:
         return jsonify({'message': "Incorrect data provided"})
 
-    if 'start_race' in payload:
-        os.system(". /home/edgar/Desktop/Projects/Garmin_test/run_all.sh")
-        print("Starting effin event!")
-        return jsonify({'message': 'Starting event at: {}'.format(datetime.now())})
+    if 'stop_event' in payload:
+        text = open('/home/edgar/Desktop/Projects/Garmin_test/listener', 'w')
+
+        # Listener script uses ok to continue looping forever
+        text.write('ok')
+        check_output = subprocess.getoutput(["ps ax | grep -m1 main.py | grep python"])
+        print("OUTPUT: ", check_output)
+        if 'ps ax' not in check_output:
+            pid = subprocess.getoutput(["ps ax | grep main.py | grep python | grep -P -o -e  '[0-9]+' | head -1"])
+        else:
+            return jsonify({'message': 'No event to terminate'})
+        # Kill process from retrieved PID
+        subprocess.getoutput(['kill -15 {}'.format(pid)])
+        # If process was killed succesfully DB should be updated with ongoing_event=False for corresponding event
+        logging.info("Stoping event")
+        return jsonify({'message': 'Stoping event at: {}'.format(datetime.now())})
 
 
 @app.route("/user", methods=['GET'])
