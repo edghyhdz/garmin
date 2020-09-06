@@ -59,8 +59,6 @@ def main(): # pylint: disable-msg=too-many-locals
     @returns: garmin fetcher
     """
 
-    global SESSION_ID
-
     try:
         # Check if env variables where initialized correctly
         for k, var in enumerate(ENV_VARIABLES):
@@ -96,12 +94,12 @@ def main(): # pylint: disable-msg=too-many-locals
         url = messages[max_time].get('complete_link')
 
         # Get session id -> to be used to save csv files with heart bit and distance data
-        SESSION_ID = messages[max_time].get('session_id')
+        session_id = messages[max_time].get('session_id')
 
         # Initilize garminfetcher class
         garmin_fetcher = GarminFetcher(
             url=url,
-            session_id=SESSION_ID,
+            session_id=session_id,
             user_id=PUBLIC_USER_ID,
             event_type=EVENT_TYPE
             )
@@ -114,15 +112,16 @@ def main(): # pylint: disable-msg=too-many-locals
             raise MainException(6)
 
         # Get data (if any)
-        DF_EVENT = garmin_fetcher.fetch_data()
+        garmin_fetcher.fetch_data()
 
-        # Initilaize message class
-        message = SendMessage(
-            acc_sid=ACC_SID,
-            auth_token=AUTH_TOKEN,
-            own_number=OWN_NUMBER,
-            phone_list=[PHONE_TO_SEND]
-            )
+        # Initilaize message class if enable_message is True
+        if ENABLE_MESSAGE:
+            message = SendMessage(
+                acc_sid=ACC_SID,
+                auth_token=AUTH_TOKEN,
+                own_number=OWN_NUMBER,
+                phone_list=[PHONE_TO_SEND]
+                )
 
         return garmin_fetcher
 
@@ -155,11 +154,20 @@ def signal_term_handler(signal, frame):
     Detects whether there was a SIGTERM signal to terminate task
     """
     logging.info('got SIGTERM')
-    event = Events.query.filter_by(session_id=SESSION_ID).first()
+    event = Events.query.filter_by(session_id=GARMIN_FETCHER.session_id).first()
     event.ongoing_event = False
     event.finished_date = datetime.now()
     db.session.commit()
     sys.exit(0)
+
+def keyboard_interrupt_update():
+    """
+    updates db in case of KeyboardInterrupt
+    """
+    event = Events.query.filter_by(session_id=GARMIN_FETCHER.session_id).first()
+    event.ongoing_event = False
+    event.finished_date = datetime.now()
+    db.session.commit()
 
 if __name__ == "__main__":
     # Catches kill signal when using API stop_event call
@@ -182,6 +190,7 @@ if __name__ == "__main__":
     TOKEN_PATH = os.environ.get('TOKEN_PATH_GMAIL')
 
     # Twilio
+    ENABLE_MESSAGE = True # Whether messaging class should be initilized or not
     ACC_SID = os.environ.get('ACCOUNT_SID')
     AUTH_TOKEN = os.environ.get('AUTH_TOKEN_TWILIO')
     OWN_NUMBER = os.environ.get('OWN_NUMBER')
@@ -190,18 +199,20 @@ if __name__ == "__main__":
     #DB User ID
     PUBLIC_USER_ID = os.environ.get("DB_USER_ID")
 
-    # Session ID -> will be overwritten afterwards
-    SESSION_ID = None
-
-    # Garmin fetcher
-    DF_EVENT = None
-
     # Check that all env variables are exported correctly -> none of them should return None
     ENV_VARIABLES = [CRED_PATH, TOKEN_PATH, ACC_SID, AUTH_TOKEN, OWN_NUMBER, PHONE_TO_SEND]
 
     # Run main script
     GARMIN_FETCHER = main()
 
-    while True:
-        DF_EVENT = GARMIN_FETCHER.fetch_data()
-        sleep(5)
+    # Keep running
+    KEEP_RUNNIG = True
+    while KEEP_RUNNIG:
+        try:
+            GARMIN_FETCHER.fetch_data()
+            logging.info("THIS IS THE SESSIONID: %s", GARMIN_FETCHER.session_id)
+            sleep(5)
+        except KeyboardInterrupt:
+            logging.info("Shuting down app with KeyboardInterrupt")
+            keyboard_interrupt_update()
+            KEEP_RUNNIG = False
