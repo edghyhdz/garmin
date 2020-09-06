@@ -6,13 +6,18 @@ from twilio.rest import Client
 
 class SendMessage(object):
     """
-
     Sends messages to given phone numbers when an action is flagged
     @param: acc_sid: account sid
     @auth_toke: authorization token
     @phone_list: str: list containing phone numbers to message
     """
-    def __init__(self, **kwargs):
+    def __init__(self):
+        pass
+
+    def init_message_class(self, **kwargs):
+        """
+        Initiates class sendmessage withing garmin class
+        """
         try: 
 
             needed_kwargs = [
@@ -41,7 +46,7 @@ class SendMessage(object):
                 
             # Have a counter limit for amount of messages to send
             self.message_counter = 0
-            self.message_limit = 15
+            self.message_limit = 1
             logging.info("Starting send message class!")
 
         except SendMessageException as err:
