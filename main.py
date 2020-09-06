@@ -5,7 +5,9 @@ It fetches from gmail link sent by garmin's LiveTrack, where it then starts the
 GarminFetcher class to continously fetch details of garmin event.
 
 It uses the SendMessage class that is connected to Twilio, to send messages depending
-certain running distances being covered."""
+certain running distances being covered.
+
+MAIN CLASS STARTS @ LINE 167"""
 
 import sys
 import os
@@ -13,9 +15,11 @@ import logging
 from datetime import datetime
 from time import sleep
 import signal
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 # Own libraries
 from GARMIN.garmin import GarminFetcher
-from TWILIO.send_message import SendMessage
+from GARMIN.real_time_plot import AnimateFunc
 from GMAIL.email_fetch import GoogleEmailFetch
 from API.api import Events, db
 
@@ -47,7 +51,7 @@ class MainException(Exception):
         self.code = code
         self.msg = str(code)
 
-def main(): # pylint: disable-msg=too-many-locals
+def main() -> tuple: # pylint: disable-msg=too-many-locals
     """This is the main script to run GarminFetcher class together
     with the SendMessage and GoogleEmailFetch classes.
 
@@ -56,7 +60,7 @@ def main(): # pylint: disable-msg=too-many-locals
 
     It uses the SendMessage class that is connected to Twilio, to send messages depending
     certain running distances being covered.
-    @returns: garmin fetcher
+    @returns: garmin fetcher, garmin activity url
     """
 
     try:
@@ -114,16 +118,7 @@ def main(): # pylint: disable-msg=too-many-locals
         # Get data (if any)
         garmin_fetcher.fetch_data()
 
-        # Initilaize message class if enable_message is True
-        if ENABLE_MESSAGE:
-            message = SendMessage(
-                acc_sid=ACC_SID,
-                auth_token=AUTH_TOKEN,
-                own_number=OWN_NUMBER,
-                phone_list=[PHONE_TO_SEND]
-                )
-
-        return garmin_fetcher
+        return garmin_fetcher, url_garmin
 
     except MainException as err:
         error_line = sys.exc_info()[-1].tb_lineno
@@ -160,7 +155,7 @@ def signal_term_handler(signal, frame):
     db.session.commit()
     sys.exit(0)
 
-def keyboard_interrupt_update():
+def db_update_exception():
     """
     updates db in case of KeyboardInterrupt
     """
@@ -202,17 +197,28 @@ if __name__ == "__main__":
     # Check that all env variables are exported correctly -> none of them should return None
     ENV_VARIABLES = [CRED_PATH, TOKEN_PATH, ACC_SID, AUTH_TOKEN, OWN_NUMBER, PHONE_TO_SEND]
 
-    # Run main script
-    GARMIN_FETCHER = main()
+    # Run main script -> returns garmin_fetcher()
+    GARMIN_FETCHER, URL = main()
 
-    # Keep running
-    KEEP_RUNNIG = True
-    while KEEP_RUNNIG:
-        try:
-            GARMIN_FETCHER.fetch_data()
-            logging.info("THIS IS THE SESSIONID: %s", GARMIN_FETCHER.session_id)
-            sleep(5)
-        except KeyboardInterrupt:
-            logging.info("Shuting down app with KeyboardInterrupt")
-            keyboard_interrupt_update()
-            KEEP_RUNNIG = False
+    # Initiliize messaging app
+    GARMIN_FETCHER.init_message_class(
+        acc_sid=ACC_SID,
+        auth_token=AUTH_TOKEN,
+        own_number=OWN_NUMBER,
+        phone_list=[PHONE_TO_SEND]
+    )
+
+    try:
+        FIG, AX = plt.subplots(2, 1, figsize=(15, 10), sharex=True)
+        ANIMATE = AnimateFunc(
+            ax=AX,
+            distance_covered=DISTANCE_COVERED,
+            url_garmin=URL,
+            nb_plots=2,
+            garmin_fetcher=GARMIN_FETCHER
+        )
+        ANI = animation.FuncAnimation(FIG, ANIMATE.animate, interval=5000)
+        plt.show()
+    except KeyboardInterrupt:
+        logging.info("Shuting down app with KeyboardInterrupt")
+        db_update_exception()
