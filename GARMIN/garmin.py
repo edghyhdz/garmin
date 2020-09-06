@@ -1,4 +1,5 @@
 """GarminFetcher class, fetches data from a given url of a garmin LiveTrack event"""
+
 import sys
 import logging
 import os
@@ -7,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 import requests
 # Own libraries
+from TWILIO.send_message import SendMessage
 from API.api import db, Events
 
 NOW = datetime.strftime(datetime.now(), "%Y_%m_%d")
@@ -23,13 +25,14 @@ logging.basicConfig(
 )
 
 
-class GarminFetcher(object):
+class GarminFetcher(SendMessage):
     """
     From a given url, it will fetch the data from LiveTrack from garmin
     The url will be obtained when the activity starts
     """
     # pylint: disable=too-many-instance-attributes
     def __init__(self, url, session_id, user_id, event_type):
+        super(GarminFetcher, self).__init__()
         self.event_type: int = event_type
         self.user_id: str = user_id
         self.session_id: str = session_id
