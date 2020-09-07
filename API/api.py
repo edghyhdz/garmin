@@ -60,6 +60,9 @@ class Events(db.Model):
 def token_required(f): 
     @wraps(f)
     def decorated(*args, **kwargs):
+        """
+        Makes function require token to authenticae
+        """
         token = None
 
         if "x-access-token" in request.headers:
@@ -83,10 +86,10 @@ def start_event(current_user):
     """Starts logging event data
 
     Args:
-        current_user ([str]): current user id, used to find details in db
+        current_user (str): current user id, used to find details in db
 
     Returns:
-        [json]: Message json, whether transaction was successful or not
+        json: Message json, whether transaction was successful or not
     """
     if not current_user.admin:
         return jsonify({'message': "You have no authorization to start an event"})
@@ -118,10 +121,10 @@ def stop_event(current_user):
     """Stops current event
 
     Args:
-        current_user ([str]): current user id, used to find details in db]
+        current_user (str): current user id, used to find details in db]
         
     Returns:
-        [json]: Message json, whether transaction was successful or not
+        json: Message, whether transaction was successful or not
     """
     if not current_user.admin:
         return jsonify({'message': "You have no authorization to start an event"})
@@ -155,8 +158,13 @@ def stop_event(current_user):
 @app.route("/api/list_events", methods=['GET'])
 @token_required
 def get_all_events(current_user):
-    """
-    Queries all events in db
+    """Get all events from db
+
+    Args:
+        current_user (str): current logged user
+
+    Returns:
+        json: all events in json format
     """
     events = Events.query.all()
     temp_dict = {}
@@ -164,9 +172,10 @@ def get_all_events(current_user):
         event_id = event.id
 
         event_dict = event.__dict__.copy()
-        
-        # Remove isinstance dict key
+
+        # Remove isinstance and data_path dict key
         event_dict.pop('_sa_instance_state')
+        event_dict.pop('data_path')
 
         temp_dict[event_id] = event_dict
     
@@ -175,31 +184,36 @@ def get_all_events(current_user):
 @app.route("/api/event/<session_id>", methods=['GET'])
 @token_required
 def get_event(current_user, session_id):
+    """Get specific event time series
+
+    Args:
+        current_user (str): Current logged user
+        session_id (str): Event to search for with given session id
+
+    Returns:
+        json: Data time series from given session_id event
     """
-    Gets indicated run with given session id
-    """
-    data = request.get_json()
-    event = Events.query.filter_by(session_id=session_id)
+    event = Events.query.filter_by(session_id=session_id).first()
 
     if not event:
         return jsonify({'message': "No event found!"})
-
-    event_df = pd.read_csv(event.data_path, index_col=0)
-
-    temp_dict = {}
-    for col in event_df.columns:
-        values = event_df[col].tolist()
-        temp_dict[col] = values
     
-    return jsonify({'data': temp_dict})
+    # Get file path from db
+    file_path = event.data_path
+    event_df = pd.read_csv(file_path, index_col=0)
+
+    # Jsonify that mofo
+    event_dict = eval(event_df.T.to_json())
+
+    return jsonify({'data': event_dict})
 
 @app.route("/user", methods=['GET'])
 @token_required
 def get_all_users(current_user):
-    """[summary]
+    """Queries all users from db
 
     Returns:
-        [type]: [description]
+        json: all users
     """
     users = User.query.all()
     output = []
@@ -217,6 +231,17 @@ def get_all_users(current_user):
 @app.route("/user/<public_id>", methods=['GET'])
 @token_required
 def get_one_user(current_user, public_id):
+    """Queries single user
+
+    Args:
+        current_user (str): current logged in user
+        public_id (str): public id of user to be used to 
+        search for user data
+
+    Returns:
+        json: returns user data
+    """
+
     user = User.query.filter_by(public_id=public_id).first()
 
     if not user:
@@ -272,6 +297,11 @@ def delete_user(current_user, public_id):
 
 @app.route("/login", methods=['GET'])
 def login():
+    """Logs user in, and generates authentication token valid for 30 min
+
+    Returns:
+        json: Message, whether transaction was successfull or not
+    """
     auth = request.authorization
     if not auth or not auth.username or not auth.password:
         return make_response("Could not verify", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
