@@ -164,6 +164,8 @@ def get_all_events(current_user):
         event_id = event.id
 
         event_dict = event.__dict__.copy()
+        
+        # Remove isinstance dict key
         event_dict.pop('_sa_instance_state')
 
         temp_dict[event_id] = event_dict
@@ -182,8 +184,14 @@ def get_event(current_user, session_id):
     if not event:
         return jsonify({'message': "No event found!"})
 
-    pd.read_csv(event.data_path, ind)
+    event_df = pd.read_csv(event.data_path, index_col=0)
 
+    temp_dict = {}
+    for col in event_df.columns:
+        values = event_df[col].tolist()
+        temp_dict[col] = values
+    
+    return jsonify({'data': temp_dict})
 
 @app.route("/user", methods=['GET'])
 @token_required
