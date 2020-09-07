@@ -36,6 +36,7 @@ class AnimateFunc(object):
         """
         This method pops out from list distances which have been done
         If a distance has been reached -> sends message to indicated phone number
+        
         @temp_df: dataframe currently being plotted
         @returns self.distance_covered list, updated with popped out item
         """
