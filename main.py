@@ -2,7 +2,7 @@
 with the SendMessage and GoogleEmailFetch classes.
 
 It fetches from gmail link sent by garmin's LiveTrack, where it then starts the
-GarminFetcher class to continously fetch details of garmin event.
+GarminFetcher class to continously fetch details of a garmin event.
 
 It uses the SendMessage class that is connected to Twilio, to send messages depending
 certain running distances being covered.
@@ -32,6 +32,7 @@ from API.api import Events, db
 # API Calls to start script                         [X]
 # Plotly dashboard                                  [ ]
 
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 class MainException(Exception):
     """
