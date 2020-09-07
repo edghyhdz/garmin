@@ -11,6 +11,7 @@ import os
 import logging
 import subprocess
 from time import sleep
+import pandas as pd
 
 
 e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db")
@@ -36,6 +37,7 @@ db = SQLAlchemy(app)
 # of the shell, to not block other scripts inside API               [X]
 
 class User(db.Model):
+    """User db table"""
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
     name = db.Column(db.String(50))
@@ -44,6 +46,7 @@ class User(db.Model):
 
 
 class Events(db.Model):
+    """Events db table"""
     id = db.Column(db.Integer, primary_key=True)
     starting_date = db.Column(db.DateTime)
     finished_date = db.Column(db.DateTime)
@@ -148,6 +151,38 @@ def stop_event(current_user):
         # If process was killed succesfully DB should be updated with ongoing_event=False for corresponding event
         logging.info("Stoping event")
         return jsonify({'message': 'Stoping event at: {}'.format(datetime.now())})
+
+@app.route("/api/list_events", methods=['GET'])
+@token_required
+def get_all_events(current_user):
+    """
+    Queries all events in db
+    """
+    events = Events.query.all()
+    temp_dict = {}
+    for event in events:
+        event_id = event.id
+
+        event_dict = event.__dict__.copy()
+        event_dict.pop('_sa_instance_state')
+
+        temp_dict[event_id] = event_dict
+    
+    return jsonify({'events': temp_dict})
+
+@app.route("/api/event/<session_id>", methods=['GET'])
+@token_required
+def get_event(current_user, session_id):
+    """
+    Gets indicated run with given session id
+    """
+    data = request.get_json()
+    event = Events.query.filter_by(session_id=session_id)
+
+    if not event:
+        return jsonify({'message': "No event found!"})
+
+    pd.read_csv(event.data_path, ind)
 
 
 @app.route("/user", methods=['GET'])
