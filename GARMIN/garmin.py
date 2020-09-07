@@ -13,13 +13,15 @@ from API.api import db, Events
 
 NOW = datetime.strftime(datetime.now(), "%Y_%m_%d")
 FILE_NAME_CONF = "log_{}.log".format(NOW)
+FILE_PATH_CONF = '/home/edgar/Desktop/Projects/Garmin_test/garmin/logs/'
+FILE_PATH_DATA = '/home/edgar/Desktop/Projects/Garmin_test/garmin/hb_logs/'
 
 logging.basicConfig(
     format='%(levelname)s: %(asctime)s - %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]',
     datefmt='%d-%b-%y %H:%M:%S',
     level=logging.INFO,
     handlers=[
-        logging.FileHandler(FILE_NAME_CONF),
+        logging.FileHandler(os.path.join(FILE_PATH_CONF, FILE_NAME_CONF)),
         logging.StreamHandler()
     ]
 )
@@ -39,7 +41,7 @@ class GarminFetcher(SendMessage):
         self.start_script: bool = True
         self.url: str = url
         self.df: pd.DataFrame = pd.DataFrame()
-        self.df_path: str = './'
+        self.df_path: str = FILE_PATH_DATA
         self.df_name: str = "{}_{}_.csv".format(session_id, NOW)
         self.df_full_path: str = os.path.join(self.df_path, self.df_name)
         self.json_name: str = "{}_{}_.json".format(session_id, NOW)
