@@ -1,21 +1,153 @@
+body {
+    font-family: "Open Sans", sans-serif;
+    background-color: #00688B;
+}
+
 .banner {
     height: 75px;
-    margin: 0px -10px 10px;
-    background-color: rgb(66, 196, 247);
-    border-radius: 2px;
+    margin: 0px -5px 10px;
+    background-color: rgb(205,92,92);
+    border-radius: 8px;
 }
 
 .banner h2{
-    color: white;
-    padding-top: 10px;
-    margin-left: 2%;
+    color: white;  
+    margin-left: .5%;
     display: inline-block;
     text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 .banner Img{
     position: relative;
     float: right; 
-    right: 10px;
+    right: 0px;
+    bottom: 10px;
     height: 80px;
 }
+
+.banner div {
+    position: relative;
+    width: 50%;
+    height: 70%;
+    margin: -20% 1% 10px;
+    display: inline-block;
+    background-color: rgb(50,92,92);
+    border-radius: 8px;
+
+}
+
+.banner h3{
+    color: white;  
+    margin-left: .5%;
+    display: inline-block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.box {
+    height: 150px;
+    width: 150px;
+    margin: 0px -1px 10px;
+    background-color: #9AC0CD;
+    border-radius: 7px;
+
+}
+
+.box h2 {
+    color: white;
+    padding-top: 30px;
+    margin-left: 2%;
+    display: inline-block;
+    text-align: center;
+    font: outline;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.graph_container {
+    height: 600px;
+    width: 100%;
+    /* margin: 0px -5px 10px; */
+    background-color: rgb(205,92,92);
+    border-radius: 8px;
+}
+
+/* .graph_container div {
+    position: relative;
+    width: 50%;
+    height: 70%;
+    margin: -20% 1% 10px;
+    display: inline-block;
+    background-color: rgb(50,92,92);
+    border-radius: 8px;
+
+} */
+
+.graph_container h3 {
+    color: white;  
+    margin-left: .5%;
+    display: inline-block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* .graph_container div {
+    position: relative;
+    width: 50%;
+    height: 70%;
+    margin: -20% 1% 10px;
+    display: inline-block;
+    background-color: rgb(50,92,92);
+    border-radius: 8px;
+
+} */
+
+.graph_left {
+    height: 75px;
+    width: 48%;
+    float: left;
+    margin-left: 20px;
+    background-color: rgb(205,92,92);
+    border-radius: 8px;
+}
+
+/* .graph_left div {
+    position: relative;
+    /* width: 50%;
+    height: 70%;
+    margin: -20% 1% 10px;
+    display: inline-block; 
+    background-color: rgb(50,92,92);
+    border-radius: 8px;
+} */
+
+/* .graph_left h3 {
+    color: white;  
+    margin-left: .5%;
+    display: inline-block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+} */
+
+.graph_right {
+    height: 75px;
+    width: 48%;
+    float: right;
+    margin-right: 20px;
+    background-color: rgb(205,92,92);
+    border-radius: 8px;
+}
+
+/* .graph_right div {
+    position: relative;
+    /* width: 50%;
+    height: 70%;
+    margin: -20% 1% 10px;
+    display: inline-block;
+    background-color: rgb(50,92,92);
+    border-radius: 8px;
+} */
+
+/* .graph_right h3 {
+    color: white;  
+    margin-left: .5%;
+    display: inline-block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+} */
