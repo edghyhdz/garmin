@@ -10,7 +10,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import pandas as pd
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, redirect
 from flask_sqlalchemy import SQLAlchemy
 import uuid
 import jwt
@@ -27,7 +27,7 @@ import pandas as pd
 
 
 
-FILE_NAME = '/home/edgar/Desktop/Projects/Garmin_test/garmin/hb_logs/6c8b2c15-540f-4214-b93b-993ab5b660aa_2020_09_03_.csv'
+FILE_NAME = '/home/edgar/Desktop/Projects/Garmin_test/garmin/hb_logs/8e893ff5-45fa-4e73-bc55-6681b2e366c8_2020_09_09_.csv'
 DF_GARMIN = pd.read_csv(FILE_NAME, index_col=0).tail(300)
 
 GRAPH_INTERVAL = os.environ.get("GRAPH_INTERVAL", 5000)
@@ -35,14 +35,16 @@ GRAPH_INTERVAL = os.environ.get("GRAPH_INTERVAL", 5000)
 APP_COLOR = {"graph_bg": "#1f1f1f", "graph_line": "#007ACE"}
 
 # Initiate df_garmin dataframe
-PATH = '/home/edgar/Desktop/Projects/Garmin_test/garmin/hb_logs/c3fc108a-adbc-4807-ba65-1bccc0672cea_2020_09_08_.csv'
+PATH = '/home/edgar/Desktop/Projects/Garmin_test/garmin/hb_logs/8e893ff5-45fa-4e73-bc55-6681b2e366c8_2020_09_09_.csv'
 DF_GARMIN = pd.read_csv(PATH, index_col=0)
 
 
 e = create_engine("sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db")
 
 server = Flask(__name__)
-APP = dash.Dash(__name__, server=server)
+APP = dash.Dash(__name__, server=server, url_base_pathname='/test/')
+
+# APP = dash.Dash(__name__, server=server, url_base_pathname='/path_name/')
 
 server.config['SECRET_KEY'] = 'thisissecret'
 server.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/edgar/Desktop/Projects/Garmin_test/garmin/garmin_db.db"
@@ -275,6 +277,11 @@ def token_required(f):
 
     return decorated
 
+@server.route("/dash")
+def render_dashboard():
+    return APP.index()
+    # return redirect('/test/')
+
 @server.route("/api/start", methods=['POST'])
 @token_required
 def start_event(current_user): 
@@ -309,6 +316,7 @@ def start_event(current_user):
         logging.info("Starting event")
 
         return jsonify({'message': 'Starting event at: {}'.format(datetime.now())})
+
 
 @server.route("/api/stop_event", methods=['POST'])
 @token_required
@@ -517,4 +525,4 @@ def login():
     return make_response("Could not verify", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 if __name__ == "__main__":
-    APP.run_server(debug=True)
+    server.run(debug=True)
