@@ -1,5 +1,5 @@
 """Application entry point."""
-from SERVER.FLASK import init_app
+from FLASK import init_app
 
 app = init_app()
 
