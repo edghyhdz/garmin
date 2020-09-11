@@ -13,7 +13,7 @@ import pandas as pd
 FILE_NAME = '/home/edgar/Desktop/Projects/Garmin_test/garmin/hb_logs/8e7b382d-3271-4f2a-a38f-a31b17f592c7_2020_09_10_.csv'
 DF_GARMIN = pd.read_csv(FILE_NAME, index_col=0).tail(300)
 
-GRAPH_INTERVAL = os.environ.get("GRAPH_INTERVAL", 5000)
+GRAPH_INTERVAL = os.environ.get("GRAPH_INTERVAL", 10000)
 
 APP_COLOR = {"graph_bg": "#1f1f1f", "graph_line": "#007ACE"}
 
@@ -28,7 +28,7 @@ def init_dashboard(server):
         server=server,
         routes_pathname_prefix='/dashapp/',
         external_stylesheets=[
-            './static/dist/css/stylesheet.css',
+            '/static/dist/css/stylessheet.css',
             'https://fonts.googleapis.com/css?family=Lato'
         ]
     )
@@ -45,7 +45,7 @@ def init_dashboard(server):
             
             html.Div(
                 [
-                    html.Embed(src="./static/html/test.html"),
+                    # html.Embed(src="./static/html/test.html"),
                 ],
                 className='box'
             ),
@@ -109,6 +109,7 @@ def init_callbacks(dash_app):
         """
         global DF_GARMIN
         DF_GARMIN = pd.read_csv(PATH, index_col=0)
+        print('UPDATING!!!!!')
 
         if len(DF_GARMIN) > 100:
             DF_GARMIN = DF_GARMIN.tail(300)
